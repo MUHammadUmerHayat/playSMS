@@ -88,6 +88,9 @@ function str2hex($string)  {
  */
 function core_display_text($text, $len=0) {
 	$text = htmlspecialchars($text);
+    // fixed Thai character display
+    return iconv_substr($text, 0, $len, "UTF-8");
+    /*
 	if ($len) {
 		$arr = explode(" ",$text);
 		for ($i=0;$i<count($arr);$i++) {
@@ -102,6 +105,7 @@ function core_display_text($text, $len=0) {
 		$text = implode(" ",$arr);
 	}
 	return $text;
+    */
 }
 
 /*
