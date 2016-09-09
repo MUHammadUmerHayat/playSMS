@@ -1,42 +1,62 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
-if(!isadmin()){forcenoaccess();};
 
-include $apps_path['plug']."/gateway/gammu/config.php";
+/**
+ * This file is part of playSMS.
+ *
+ * playSMS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * playSMS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with playSMS. If not, see <http://www.gnu.org/licenses/>.
+ */
+defined('_SECURE_') or die('Forbidden');
 
-if ($gateway_module == $gammu_param['name'])
-{
-	$status_active = "(<b><font color=green>"._('Active')."</font></b>)";
+if (!auth_isadmin()) {
+	auth_block();
 }
-else
-{
-	$status_active = "(<b><font color=red>"._('Inactive')."</font></b>) (<a href=\"index.php?app=menu&inc=gateway_gammu&op=manage_activate\">"._('click here to activate')."</a>)";
-}
 
-switch ($op)
-{
+include $core_config['apps_path']['plug'] . "/gateway/gammu/config.php";
+
+switch (_OP_) {
 	case "manage":
-		if ($err)
-		{
-			$content = "<div class=error_string>$err</div>";
+		if ($err = TRUE) {
+			$content = _dialog();
 		}
 		$content .= "
-	    <h2>"._('Manage gammu')."</h2>
-	    <p>
-	<table width=100% cellpadding=1 cellspacing=2 border=0>
-	    <tr>
-		<td width=150>"._('Gateway name')."</td><td width=5>:</td><td><b>gammu</b> $status_active</td>
-	    </tr>
-	</table>	    
-	";
-		echo $content;
+			<h2>" . _('Manage gammu') . "</h2>
+			<form action=index.php?app=main&inc=gateway_gammu&op=manage_save method=post>
+			" . _CSRF_FORM_ . "
+			<table class=playsms-table>
+				<tbody>
+				<tr>
+					<td class=label-sizer>" . _('Gateway name') . "</td><td>gammu</td>
+				</tr>
+				<tr>
+					<td>" . _('Spool folder') . "</td><td><input type=text name=up_path value=\"" . $plugin_config['gammu']['path'] . "\"></td>
+				</tr>
+				</tbody>
+			</table>
+			<p><input type=submit class=button value=\"" . _('Save') . "\">
+			</form>";
+		$content .= _back('index.php?app=main&inc=core_gateway&op=gateway_list');
+		_p($content);
 		break;
-	case "manage_activate":
-		$db_query = "UPDATE "._DB_PREF_."_tblConfig_main SET c_timestamp='".mktime()."',cfg_gateway_module='gammu'";
-		$db_result = dba_query($db_query);
-		$error_string = _('Gateway has been activated');
-		header ("Location: index.php?app=menu&inc=gateway_gammu&op=manage&err=".urlencode($error_string));
+	case "manage_save":
+		$up_path = core_sanitize_path($_POST['up_path']);
+		$items = array(
+			'path' => $up_path 
+		);
+		registry_update(0, 'gateway', 'gammu', $items);
+		
+		$_SESSION['dialog']['info'][] = _('Changes have been made');
+		header("Location: " . _u('index.php?app=main&inc=gateway_gammu&op=manage'));
+		exit();
 		break;
 }
-
-?>

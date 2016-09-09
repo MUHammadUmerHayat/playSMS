@@ -1,95 +1,168 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
 
-function phonebook_groupid2code($gpid) {
-	global $core_config;
-	if ($gpid) {
-		for ($c=0;$c<count($core_config['toolslist']);$c++) {
-			if ($gp_code = x_hook($core_config['toolslist'][$c],'phonebook_groupid2code',array($gpid))) {
-				break;
-			}
-		}
-	}
-	return $gp_code;
+/**
+ * This file is part of playSMS.
+ *
+ * playSMS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * playSMS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with playSMS. If not, see <http://www.gnu.org/licenses/>.
+ */
+defined('_SECURE_') or die('Forbidden');
+
+function phonebook_groupid2name($uid, $gpid) {
+	$ret = core_call_hook();
+	return $ret;
 }
 
-function phonebook_groupcode2id($uid,$gp_code) {
-	global $core_config;
-	if ($uid && $gp_code) {
-		for ($c=0;$c<count($core_config['toolslist']);$c++) {
-			if ($gpid = x_hook($core_config['toolslist'][$c],'phonebook_groupcode2id',array($uid,$gp_code))) {
-				break;
-			}
-		}
-	}
-	return $gpid;
+function phonebook_groupname2id($uid, $name) {
+	$ret = core_call_hook();
+	return $ret;
 }
 
-function phonebook_number2name($p_num, $c_username="") {
-	global $core_config;
-	if ($p_num) {
-		for ($c=0;$c<count($core_config['toolslist']);$c++) {
-			if ($p_desc = x_hook($core_config['toolslist'][$c],'phonebook_number2name',array($p_num,$c_username))) {
-				break;
-			}
-		}
-	}
-	return $p_desc;
+function phonebook_groupid2code($uid, $gpid) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+function phonebook_groupcode2id($uid, $code) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+function phonebook_getdatabynumber($uid, $mobile) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+function phonebook_number2id($uid, $p_num) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+function phonebook_number2name($uid, $p_num) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+function phonebook_number2email($uid, $p_num) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+function phonebook_number2tags($uid, $p_num) {
+	$ret = core_call_hook();
+	return $ret;
 }
 
 function phonebook_getmembercountbyid($gpid) {
-	global $core_config;
-	$count = 0;
-	for ($c=0;$c<count($core_config['toolslist']);$c++) {
-		if ($count = x_hook($core_config['toolslist'][$c],'phonebook_getmembercountbyid',array($gpid))) {
-			break;
-		}
-	}
-	return $count;
-}
-
-function phonebook_getdatabyid($gpid, $orderby="") {
-	global $core_config;
-	$ret = array();
-	for ($c=0;$c<count($core_config['toolslist']);$c++) {
-		if ($ret = x_hook($core_config['toolslist'][$c],'phonebook_getdatabyid',array($gpid,$orderby))) {
-			break;
-		}
-	}
+	$ret = core_call_hook();
 	return $ret;
 }
 
-function phonebook_getdatabyuid($uid, $orderby="") {
-	global $core_config;
-	$ret = array();
-	for ($c=0;$c<count($core_config['toolslist']);$c++) {
-		if ($ret = x_hook($core_config['toolslist'][$c],'phonebook_getdatabyuid',array($uid,$orderby))) {
-			break;
-		}
-	}
+/**
+ * Get members of a group, search by group ID
+ *
+ * @param integer $gpid
+ *        Group ID
+ * @param string $orderby
+ * @return array array(pid, p_desc, p_num, email)
+ */
+function phonebook_getdatabyid($gpid, $orderby = "") {
+	$ret = core_call_hook();
 	return $ret;
 }
 
-function phonebook_getsharedgroup($uid) {
-	global $core_config;
-	$ret = array();
-	for ($c=0;$c<count($core_config['toolslist']);$c++) {
-		if ($ret = x_hook($core_config['toolslist'][$c],'phonebook_getsharedgroup',array($uid))) {
-			break;
-		}
-	}
+/**
+ * Get members of a group, search by User ID
+ *
+ * @param integer $uid
+ *        User ID
+ * @param string $orderby
+ * @return array array(pid, p_desc, p_num, email)
+ */
+function phonebook_getdatabyuid($uid, $orderby = "") {
+	$ret = core_call_hook();
 	return $ret;
 }
 
-function phonebook_getgroupbyuid($uid, $orderby="") {
-	global $core_config;
-	$ret = array();
-	for ($c=0;$c<count($core_config['toolslist']);$c++) {
-		if ($ret = x_hook($core_config['toolslist'][$c],'phonebook_getgroupbyuid',array($uid,$orderby))) {
-			break;
-		}
-	}
+/**
+ * Get data of a group, search by group ID
+ *
+ * @param integer $gpid
+ *        Group ID
+ * @return array array(gpid, group_name, code, flag_sender)
+ */
+function phonebook_getgroupbyid($gpid) {
+	$ret = core_call_hook();
 	return $ret;
 }
 
-?>
+/**
+ * Get data of a group, search by User ID
+ *
+ * @param integer $uid
+ *        User ID
+ * @param string $orderby
+ * @return array array(gpid, group_name, code, flag_sender)
+ */
+function phonebook_getgroupbyuid($uid, $orderby = "") {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+/**
+ * Search members, search by User ID and/or a keyword
+ *
+ * @param integer $uid
+ *        User ID
+ * @param string $keyword
+ *        Keyword
+ * @param integer $count
+ *        Search limit
+ * @return array array(pid, p_desc, p_num, email, tags)
+ */
+function phonebook_search($uid, $keyword = "", $count = 0) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+/**
+ * Search groups, search by User ID and/or a keyword
+ *
+ * @param integer $uid
+ *        User ID
+ * @param string $keyword
+ *        Keyword
+ * @param integer $count
+ *        Search limit
+ * @return array array(gpid, group_name, code, flag_sender)
+ */
+function phonebook_search_group($uid, $keyword = "", $count = 0) {
+	$ret = core_call_hook();
+	return $ret;
+}
+
+/**
+ * Search users, search by User ID and/or a keyword
+ *
+ * @param integer $uid
+ *        User ID
+ * @param string $keyword
+ *        Keyword
+ * @param integer $count
+ *        Search limit
+ * @return array Array of user's data
+ */
+function phonebook_search_user($uid, $keyword = "", $count = 0) {
+	$ret = core_call_hook();
+	return $ret;
+}

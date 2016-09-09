@@ -1,16 +1,23 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
+defined('_SECURE_') or die('Forbidden');
 
-$smstools_param['name'] = "smstools";
-$smstools_param['spool_dir'] = "/var/spool/sms";
-$smstools_param['spool_bak'] = "/var/spool/smsbackup";
+// get gammu config from registry
+$data = registry_search(0, 'gateway', 'smstools');
 
-// save plugin's parameters or options in $core_config
-$core_config['plugin']['smstools'] = $smstools_param;
+$plugin_config['smstools']['name'] = 'smstools';
+$plugin_config['smstools']['default_queue'] = trim(core_sanitize_path($data['gateway']['smstools']['default_queue']));
+if (!$plugin_config['smstools']['default_queue']) {
+	$plugin_config['smstools']['default_queue'] = "/var/spool/sms";
+}
+
+// smsc configuration
+$plugin_config['smstools']['_smsc_config_'] = array(
+	'sms_receiver' => _('Receiver number'),
+	'queue' => _('Queue directory') 
+);
 
 // insert to left menu array
-if (isadmin()) {
-	$menutab_gateway = $core_config['menu']['main_tab']['gateway'];
-	$arr_menu[$menutab_gateway][] = array("index.php?app=menu&inc=gateway_smstools&op=manage", _('Manage smstools'));
-}
-?>
+//if (isadmin()) {
+//	$menutab_gateway = $core_config['menutab']['gateway'];
+//	$menu_config[$menutab_gateway][] = array("index.php?app=main&inc=gateway_smstools&op=manage", _('Manage smstools'));
+//}

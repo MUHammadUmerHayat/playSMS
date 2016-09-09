@@ -1,6 +1,0 @@
-#!/bin/bash
-
-. /etc/default/playsms
-
-killall -9 playsmsd >/dev/null 2>&1
-killall -9 sendsmsd >/dev/null 2>&1

@@ -1,8 +1,9 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
+defined('_SECURE_') or die('Forbidden');
 
 // insert to left menu array
-$menutab_feature = $core_config['menu']['main_tab']['feature'];
-$arr_menu[$menutab_feature][] = array("index.php?app=menu&inc=feature_sms_poll&op=sms_poll_list", _('Manage poll'));
-
-?>
+$menutab = $core_config['menutab']['features'];
+$menu_config[$menutab][] = array(
+	"index.php?app=main&inc=feature_sms_poll&op=sms_poll_list",
+	_('Manage poll') 
+);

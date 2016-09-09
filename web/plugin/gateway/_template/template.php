@@ -1,64 +1,46 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
-if(!isadmin()){forcenoaccess();};
+defined('_SECURE_') or die('Forbidden');
+if(!auth_isadmin()){auth_block();};
 
-include $apps_path['plug']."/gateway/template/config.php";
+include $core_config['apps_path']['plug']."/gateway/template/config.php";
 
-if ($gateway_module == $template_param['name'])
-{
-	$status_active = "(<b><font color=green>"._('Active')."</font></b>)";
-}
-else
-{
-	$status_active = "(<b><font color=red>"._('Inactive')."</font></b>) (<a href=\"index.php?app=menu&inc=gateway_template&op=manage_activate\">"._('click here to activate')."</a>)";
-}
-
-
-switch ($op)
-{
+switch (_OP_) {
 	case "manage":
-		if ($err)
-		{
-			$content = "<div class=error_string>$err</div>";
+		if ($err = TRUE) {
+			$content = _dialog();
 		}
 		$content .= "
 	    <h2>"._('Manage template')."</h2>
 	    <p>
-	    <form action=index.php?app=menu&inc=gateway_template&op=manage_save method=post>
-	    <table width=100% cellpadding=1 cellspacing=2 border=0>
+	    <form action=index.php?app=main&inc=gateway_template&op=manage_save method=post>
+	    "._CSRF_FORM_."
+	    <table class=playsms-table cellpadding=1 cellspacing=2 border=0>
 		<tr>
-		    <td width=150>"._('Gateway name')."</td><td width=5>:</td><td><b>template</b> $status_active</td>
+		    <td class=label-sizer>"._('Gateway name')."</td><td>template</td>
 		</tr>
 		<tr>
-		    <td>"._('Template installation path')."</td><td>:</td><td><input type=text size=40 maxlength=250 name=up_path value=\"".$template_param['path']."\"> ("._('No trailing slash')." \"/\")</td>
-		</tr>	    
-	    </table>	    
+		    <td>"._('Template installation path')."</td><td><input type=text maxlength=250 name=up_path value=\"".$template_param['path']."\"> ("._('No trailing slash')." \"/\")</td>
+		</tr>
+	    </table>
 	    <p><input type=submit class=button value=\""._('Save')."\">
 	    </form>";
-		echo $content;
+		_p($content);
 		break;
 	case "manage_save":
 		$up_path = $_POST['up_path'];
-		$error_string = _('No changes has been made');
+		$_SESSION['dialog']['info'][] = _('No changes have been made');
 		if ($up_path)
 		{
 			$db_query = "
-		UPDATE "._DB_PREF_."_gatewayTemplate_config 
-		SET c_timestamp='".mktime()."',cfg_path='$up_path'
+		UPDATE "._DB_PREF_."_gatewayTemplate_config
+		SET c_timestamp='".time()."',cfg_path='$up_path'
 	    ";
 			if (@dba_affected_rows($db_query))
 			{
-				$error_string = _('Gateway module configurations has been saved');
+				$_SESSION['dialog']['info'][] = _('Gateway module configurations has been saved');
 			}
 		}
-		header ("Location: index.php?app=menu&inc=gateway_template&op=manage&err=".urlencode($error_string));
-		break;
-	case "manage_activate":
-		$db_query = "UPDATE "._DB_PREF_."_tblConfig_main SET c_timestamp='".mktime()."',cfg_gateway_module='template'";
-		$db_result = dba_query($db_query);
-		$error_string = _('Gateway has been activated');
-		header ("Location: index.php?app=menu&inc=gateway_template&op=manage&err=".urlencode($error_string));
+		header("Location: "._u('index.php?app=main&inc=gateway_template&op=manage'));
+		exit();
 		break;
 }
-
-?>

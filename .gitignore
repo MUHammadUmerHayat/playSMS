@@ -1,4 +1,34 @@
+docs/_build/
+vendor/*
+composer
+composer.phar
+composer.lock
+coverage
+package.xml
+*.tgz
+
+# You should be keeping these in a global gitignore, see for example 
+# https://help.github.com/articles/ignoring-files#global-gitignore
+.DS_Store
+.idea
+
+nbproject
+
+# This is used by the documentation generator
+venv
+
+.git
 .gitignore
-/web/config.php
-/.buildpath
-/.settings
+*~
+.buildpath
+.settings
+.project
+.codio
+
+web/config.php
+web/lib/composer
+
+install.conf
+install.conf.backup
+
+.svn

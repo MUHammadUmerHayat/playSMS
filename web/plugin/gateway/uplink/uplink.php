@@ -1,116 +1,103 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
-if(!isadmin()){forcenoaccess();};
 
-include $apps_path['plug']."/gateway/uplink/config.php";
+/**
+ * This file is part of playSMS.
+ *
+ * playSMS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * playSMS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with playSMS. If not, see <http://www.gnu.org/licenses/>.
+ */
+defined('_SECURE_') or die('Forbidden');
 
-if ($gateway_module == $uplink_param['name'])
-{
-	$status_active = "(<b><font color=green>"._('Active')."</font></b>)";
+if (!auth_isadmin()) {
+	auth_block();
 }
-else
-{
-	$status_active = "(<b><font color=red>"._('Inactive')."</font></b>) (<a href=\"index.php?app=menu&inc=gateway_uplink&op=manage_activate\">"._('click here to activate')."</a>)";
-}
 
+include $core_config['apps_path']['plug'] . "/gateway/uplink/config.php";
 
-switch ($op)
-{
+switch (_OP_) {
 	case "manage":
-		if ($err)
-		{
-			$content = "<div class=error_string>$err</div>";
+		if ($plugin_config['uplink']['try_disable_footer']) {
+			$selected['yes'] = 'selected';
+		} else {
+			$selected['no'] = 'selected';
 		}
-		$content .= "
-	    <h2>"._('Manage uplink')."</h2>
-	    <p>
-	    <form action=index.php?app=menu&inc=gateway_uplink&op=manage_save method=post>
-	<table width=100% cellpadding=1 cellspacing=2 border=0>
-	    <tr>
-		<td width=150>"._('Gateway name')."</td><td width=5>:</td><td><b>uplink</b> $status_active</td>
-	    </tr>
-	    <tr>
-		<td>"._('Master URL')."</td><td>:</td><td><input type=text size=30 maxlength=250 name=up_master value=\"".$uplink_param['master']."\"></td>
-	    </tr>
-	    <tr>
-		<td>"._('Additional URL parameter')."</td><td>:</td><td><input type=text size=30 maxlength=250 name=up_additional_param value=\"".$uplink_param['additional_param']."\"></td>
-	    </tr>
-	    <tr>
-		<td>"._('Username')."</td><td>:</td><td><input type=text size=30 maxlength=30 name=up_username value=\"".$uplink_param['username']."\"></td>
-	    </tr>	    	    
-	    <tr>
-		<td>"._('Password')."</td><td>:</td><td><input type=password size=30 maxlength=30 name=up_password value=\"\"> ("._('Fill to change the password').")</td>
-	    </tr>	    
-	    <tr>
-		<td>"._('Module sender ID')."</td><td>:</td><td><input type=text size=11 maxlength=11 name=up_global_sender value=\"".$uplink_param['global_sender']."\"> ("._('Max. 16 numeric or 11 alphanumeric char. empty to disable').")</td>
-	    </tr>
-	    <tr>
-		<td>"._('Module timezone')."</td><td>:</td><td><input type=text size=5 maxlength=5 name=up_global_timezone value=\"".$uplink_param['datetime_timezone']."\"> ("._('Eg: +0700 for Jakarta/Bangkok timezone').")</td>
-	    </tr>
-	    <!--
-	    <tr>
-		<td>"._('Uplink incoming path')."</td><td>:</td><td><input type=text size=40 maxlength=250 name=up_incoming_path value=\"".$uplink_param['path']."\"> ("._('No trailing slash')." \"/\")</td>
-	    </tr>	    	    
-	    -->
-	</table>
-	    <p><input type=submit class=button value=\""._('Save')."\">
-	    </form>
-	";
-		echo $content;
+		$option_try_disable_footer = "<option value=\"1\" " . $selected['yes'] . ">" . _('yes') . "</option>";
+		$option_try_disable_footer .= "<option value=\"0\" " . $selected['no'] . ">" . _('no') . "</option>";
+		
+		$content = _dialog() . "
+			<h2>" . _('Manage uplink') . "</h2>
+			<form action=index.php?app=main&inc=gateway_uplink&op=manage_save method=post>
+			" . _CSRF_FORM_ . "
+			<table class=playsms-table>
+				<tbody>
+				<tr>
+					<td class=label-sizer>" . _('Gateway name') . "</td><td>uplink</td>
+				</tr>
+				<tr>
+					<td>" . _mandatory(_('Master URL')) . "</td><td><input type=text maxlength=250 name=up_master value=\"" . $plugin_config['uplink']['master'] . "\"></td>
+				</tr>
+				<tr>
+					<td>" . _('Additional URL parameter') . "</td><td><input type=text maxlength=250 name=up_additional_param value=\"" . $plugin_config['uplink']['additional_param'] . "\"></td>
+				</tr>
+				<tr>
+					<td>" . _mandatory(_('Webservice username')) . "</td><td><input type=text maxlength=30 name=up_username value=\"" . $plugin_config['uplink']['username'] . "\"></td>
+				</tr>
+				<tr>
+					<td>" . _mandatory(_('Webservice token')) . "</td><td><input type=text maxlength=32 name=up_token value=\"" . $plugin_config['uplink']['token'] . "\"></td>
+				</tr>
+				<tr>
+					<td>" . _('Try to disable SMS footer on master') . "</td><td><select name=up_try_disable_footer>" . $option_try_disable_footer . "</select></td>
+				</tr>
+				<tr>
+					<td>" . _('Module sender ID') . "</td><td><input type=text maxlength=16 name=up_module_sender value=\"" . $plugin_config['uplink']['module_sender'] . "\"> " . _hint(_('Max. 16 numeric or 11 alphanumeric char. empty to disable')) . "</td>
+				</tr>
+				<tr>
+					<td>" . _('Module timezone') . "</td><td><input type=text size=5 maxlength=5 name=up_datetime_timezone value=\"" . $plugin_config['uplink']['datetime_timezone'] . "\"> " . _hint(_('Eg: +0700 for Jakarta/Bangkok timezone')) . "</td>
+				</tr>
+				</tbody>
+			</table>
+			<p><input type=submit class=button value=\"" . _('Save') . "\">
+			</form>" . _back('index.php?app=main&inc=core_gateway&op=gateway_list');
+		_p($content);
 		break;
 	case "manage_save":
 		$up_master = $_POST['up_master'];
 		$up_additional_param = $_POST['up_additional_param'];
 		$up_username = $_POST['up_username'];
-		$up_password = $_POST['up_password'];
-		$up_global_sender = $_POST['up_global_sender'];
-		$up_global_timezone = $_POST['up_global_timezone'];
-		$up_incoming_path = $_POST['up_incoming_path'];
-		$error_string = _('No changes has been made');
-                
-                /** Fixme Edward, Remove $up_incoming_path From IF **/
-		/**if ($up_master && $up_username && $up_incoming_path)**/
-                if ($up_master && $up_username)
-		{
-			if ($up_password) {
-				$password_change = "cfg_password='$up_password',";
+		$up_token = $_POST['up_token'];
+		$up_module_sender = $_POST['up_module_sender'];
+		$up_datetime_timezone = $_POST['up_datetime_timezone'];
+		$up_try_disable_footer = $_POST['up_try_disable_footer'];
+		if ($up_master && $up_username && $up_token) {
+			$db_query = "
+				UPDATE " . _DB_PREF_ . "_gatewayUplink_config
+				SET c_timestamp='" . time() . "',
+				cfg_master='$up_master',
+				cfg_additional_param='$up_additional_param',
+				cfg_username='$up_username',
+				cfg_token='$up_token',
+				cfg_module_sender='$up_module_sender',
+				cfg_datetime_timezone='$up_datetime_timezone',
+				cfg_try_disable_footer='$up_try_disable_footer'";
+			if (@dba_affected_rows($db_query)) {
+				$_SESSION['dialog']['info'][] = _('Gateway module configurations has been saved');
+			} else {
+				$_SESSION['dialog']['danger'][] = _('Unable to save gateway module configurations');
 			}
-			/*$db_query = "
-		UPDATE "._DB_PREF_."_gatewayUplink_config 
-		SET c_timestamp='".mktime()."',
-		    cfg_master='$up_master',
-		    cfg_additional_param='$up_additional_param',
-		    cfg_username='$up_username',
-		    ".$password_change."
-		    cfg_global_sender='$up_global_sender',
-		    cfg_datetime_timezone='$up_global_timezone',
-		    cfg_incoming_path='$up_incoming_path'
-	    ";*/
-                        $db_query = "
-		UPDATE "._DB_PREF_."_gatewayUplink_config 
-		SET c_timestamp='".mktime()."',
-		    cfg_master='$up_master',
-		    cfg_additional_param='$up_additional_param',
-		    cfg_username='$up_username',
-		    ".$password_change."
-		    cfg_global_sender='$up_global_sender',
-		    cfg_datetime_timezone='$up_global_timezone',
-		    cfg_incoming_path='$up_incoming_path'";
-                        /**End Of Fixing**/
-                        
-			if (@dba_affected_rows($db_query))
-			{
-				$error_string = _('Gateway module configurations has been saved');
-			}
+		} else {
+			$_SESSION['dialog']['danger'][] = _('All mandatory fields must be filled');
 		}
-		header ("Location: index.php?app=menu&inc=gateway_uplink&op=manage&err=".urlencode($error_string));
-		break;
-	case "manage_activate":
-		$db_query = "UPDATE "._DB_PREF_."_tblConfig_main SET c_timestamp='".mktime()."',cfg_gateway_module='uplink'";
-		$db_result = dba_query($db_query);
-		$error_string = _('Gateway has been activated');
-		header ("Location: index.php?app=menu&inc=gateway_uplink&op=manage&err=".urlencode($error_string));
+		header("Location: " . _u('index.php?app=main&inc=gateway_uplink&op=manage'));
+		exit();
 		break;
 }
-
-?>

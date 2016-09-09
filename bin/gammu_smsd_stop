@@ -1,5 +1,0 @@
-#!/bin/bash
-
-. /etc/default/playsms
-
-killall -9 gammu-smsd >/dev/null 2>&1

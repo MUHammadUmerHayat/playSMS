@@ -1,31 +1,27 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-01 08:26+0700\n"
+"POT-Creation-Date: 2012-09-29 17:59+0700\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: plugin/gateway/smstools/smstools.php:9
-msgid "Active"
-msgstr "Active"
+msgid "Changes have been made"
+msgstr ""
 
-#: plugin/gateway/smstools/smstools.php:13
-msgid "Inactive"
-msgstr "Inactive"
+msgid "Default default_queue directory"
+msgstr ""
 
-#: plugin/gateway/smstools/smstools.php:13
-msgid "click here to activate"
-msgstr "cliquez pour activer"
+msgid "Gateway name"
+msgstr "Nom de la passerelle"
 
-#: plugin/gateway/smstools/smstools.php:24
-#: plugin/gateway/smstools/config.php:12 plugin/gateway/smstools/config.php:14
 msgid "Manage smstools"
 msgstr "Gérer smstools"
 
-#: plugin/gateway/smstools/smstools.php:28
-msgid "Gateway name"
-msgstr "Nom passerelle"
+msgid "Queue directory"
+msgstr ""
 
-#: plugin/gateway/smstools/smstools.php:37
-msgid "Gateway has been activated"
-msgstr "Passerelle activée"
+msgid "Receiver number"
+msgstr ""
+
+msgid "Save"
+msgstr ""

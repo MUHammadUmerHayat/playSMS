@@ -1,188 +1,189 @@
 <?php
-if(!(defined('_SECURE_'))){die('Intruder alert');};
-function uplink_hook_playsmsd() {
-	// force to check p_status=1 (sent) as getsmsstatus only check for p_status=0 (pending)
-	//$db_query = "SELECT * FROM "._DB_PREF_."_tblSMSOutgoing WHERE p_status=0 OR p_status=1";
-	$db_query = "SELECT * FROM "._DB_PREF_."_tblSMSOutgoing WHERE p_status='1' AND p_gateway='uplink'";
-	$db_result = dba_query($db_query);
-	while ($db_row = dba_fetch_array($db_result)) {
-		$uid = $db_row['uid'];
-		$smslog_id = $db_row['smslog_id'];
-		$p_datetime = $db_row['p_datetime'];
-		$p_update = $db_row['p_update'];
-		$gpid = $db_row['p_gpid'];
-		x_hook('uplink','getsmsstatus',array($gpid,$uid,$smslog_id,$p_datetime,$p_update));
-	}
-}
 
-// hook_sendsms
-// called by main sms sender
-// return true for success delivery
-// $sms_sender	: sender mobile number
-// $sms_footer		: sender sms footer or sms sender ID
-// $sms_to		: destination sms number
-// $sms_msg		: sms message tobe delivered
-// $gpid		: group phonebook id (optional)
-// $uid			: sender User ID
-// $smslog_id		: sms ID
-function uplink_hook_sendsms($sms_sender,$sms_footer,$sms_to,$sms_msg,$uid='',$gpid=0,$smslog_id=0,$sms_type='text',$unicode=0) {
-	// global $uplink_param;   // global all variables needed, eg: varibles from config.php
+/**
+ * This file is part of playSMS.
+ *
+ * playSMS is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * playSMS is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with playSMS. If not, see <http://www.gnu.org/licenses/>.
+ */
+defined('_SECURE_') or die('Forbidden');
+
+/**
+ * hook_sendsms called by sendsms_process()
+ *
+ * @param string $smsc
+ *        SMSC name
+ * @param unknown $sms_sender
+ *        Sender ID
+ * @param string $sms_footer
+ *        Message footer
+ * @param string $sms_to
+ *        Destination number
+ * @param string $sms_msg
+ *        Message
+ * @param integer $uid
+ *        User ID
+ * @param integer $gpid
+ *        Group ID
+ * @param integer $smslog_id
+ *        SMS Log ID
+ * @param integer $sms_type
+ *        Type of SMS
+ * @param integer $unicode
+ *        Unicode flag
+ * @return boolean
+ */
+function uplink_hook_sendsms($smsc, $sms_sender, $sms_footer, $sms_to, $sms_msg, $uid = '', $gpid = 0, $smslog_id = 0, $sms_type = 'text', $unicode = 0) {
+	
+	// global $plugin_config; // global all variables needed, eg: varibles from config.php
 	// ...
 	// ...
 	// return true or false
 	// return $ok;
-	global $uplink_param;
+	global $plugin_config;
+	
+	_log("enter smsc:" . $smsc . " smslog_id:" . $smslog_id . " uid:" . $uid . " to:" . $sms_to, 3, "uplink_hook_sendsms");
+	
+	// override plugin gateway configuration by smsc configuration
+	$plugin_config = gateway_apply_smsc_config($smsc, $plugin_config);
+	
 	$sms_sender = stripslashes($sms_sender);
-	$sms_footer = stripslashes($sms_footer);
-	$sms_msg = stripslashes($sms_msg);
-	$ok = false;
-
-	if ($sms_footer) {
-		$sms_msg = $sms_msg.$sms_footer;
+	if ($plugin_config['uplink']['module_sender']) {
+		$sms_sender = $plugin_config['uplink']['module_sender'];
 	}
-	$sms_type = 2; // text
-	if ($msg_type=="flash") {
-		$sms_type = 1; // flash
-	}
+	
+	$sms_footer = ($sms_footer ? $sms_footer : stripslashes($sms_footer));
+	$sms_msg = stripslashes($sms_msg) . $sms_footer;
+	
+	$ok = FALSE;
+	
 	if ($sms_to && $sms_msg) {
-
-		if ($unicode) {
-			// fixme anton - this isn't right, encoding should be done in master, not locally
-			/*
-			if (function_exists('mb_convert_encoding')) {
-			$sms_msg = mb_convert_encoding($sms_msg, "UCS-2BE", "auto");
-			}
-			*/
-			$unicode = 1;
+		$unicode = (trim($unicode) ? 1 : 0);
+		$nofooter = ($plugin_config['uplink']['try_disable_footer'] ? 1 : 0);
+		
+		$ws = new Playsms\Webservices();
+		
+		$ws->url = $plugin_config['uplink']['master'] . '/index.php?app=ws';
+		$ws->username = $plugin_config['uplink']['username'];
+		$ws->token = $plugin_config['uplink']['token'];
+		$ws->to = $sms_to;
+		$ws->from = $sms_sender;
+		$ws->msg = $sms_msg;
+		$ws->unicode = $unicode;
+		$ws->nofooter = $nofooter;
+		
+		$ws->sendSms();
+		
+		_log('sendsms url:[' . $ws->getWebservicesUrl() . '] smsc:[' . $smsc . ']', 3, 'uplink_hook_sendsms');
+		
+		// in playsms-webservices 1.0.5 and above the data returns as an array, unless a failed response
+		$response = $ws->getData();
+		if (is_array($response->data)) {
+			$data = $response->data[0];
+		} else {
+			$data = $response;
 		}
-		// fixme anton - from playSMS v0.9.5.1 references to input.php replaced with index.php?app=webservices
-		// I should add autodetect, if its below v0.9.5.1 should use input.php
-		$query_string = "index.php?app=webservices&u=".$uplink_param['username']."&p=".$uplink_param['password']."&ta=pv&to=".urlencode($sms_to)."&from=".urlencode($sms_from)."&type=$sms_type&msg=".urlencode($sms_msg)."&unicode=".$unicode;
-		$url = $uplink_param['master']."/".$query_string;
+		
+		//_log('data:[' . print_r($data, 1) . ']', 3, 'uplink_hook_sendsms');
+		
 
-		if ($additional_param = $uplink_param['additional_param']) {
-			$additional_param = "&".$additional_param;
-		}
-		$url .= $additional_param;
-		$url = str_replace("&&", "&", $url);
-
-		logger_print($url, 3, "uplink outgoing");
-		$responses = trim(file_get_contents($url));
-		if ($responses) {
-			$up_id = 0;
-			$response = explode(' ', $responses);
-			$response_data = explode(',', $response[1]);
-			if ($response[0] == "OK") {
-				$remote_slid = $response_data[0];
-				$remote_queue_code = $response_data[1];
-				if ($remote_slid) {
-					$db_query = "
-						INSERT INTO "._DB_PREF_."_gatewayUplink (up_local_slid,up_remote_slid,up_status)
-						VALUES ('$smslog_id','$remote_slid','0')
-					    ";
-					$up_id = @dba_insert_id($db_query);
+		if ($data->status == 'OK') {
+			if ($data->smslog_id || $data->queue) {
+				$db_query = "
+				INSERT INTO " . _DB_PREF_ . "_gatewayUplink (up_local_smslog_id,up_remote_smslog_id,up_status,up_remote_queue_code,up_dst)
+				VALUES ('$smslog_id','" . $data->smslog_id . "','0','" . $data->queue . "','$sms_to')";
+				if ($up_id = @dba_insert_id($db_query)) {
+					$ok = TRUE;
+					_log('sendsms success. smslog_id:' . $smslog_id . ' remote_smslog_id:' . $data->smslog_id . ' remote_queue:' . $data->queue, 3, 'uplink_hook_sendsms');
+				} else {
+					$ok = TRUE;
+					$p_status = 1; // sent
+					dlr($smslog_id, $uid, $p_status);
+					_log('sendsms success but unable to save data', 3, 'uplink_hook_sendsms');
+					
+					return $ok;
 				}
-				$ok = true;
+			} else {
+				_log('sendsms failed no smslog_id or queue', 3, 'uplink_hook_sendsms');
 			}
-			logger_print("smslog_id:".$smslog_id." up_id:".$up_id." status:".$response[0]." remote_slid:".$response_data[0]." remote_queue_code:".$response_data[1], 2, "uplink outgoing");
 		} else {
-			logger_print("smslog_id:".$smslog_id." no response", 2, "uplink outgoing");
+			_log('sendsms failed. error:' . $ws->getError() . ' error_string:' . $ws->getErrorString(), 3, 'uplink_hook_sendsms');
 		}
 	}
-	if ($ok && $remote_queue_code) {
-		if ($remote_slid) {
-			$p_status = 0;
-		} else {
-			$p_status = 1;
-		}
+	
+	if ($ok && ($data->smslog_id || $data->queue)) {
+		$p_status = 0; // pending
 	} else {
-		$p_status = 2;
+		$p_status = 2; // failed
 	}
-	setsmsdeliverystatus($smslog_id,$uid,$p_status);
+	dlr($smslog_id, $uid, $p_status);
+	
 	return $ok;
 }
 
 // hook_getsmsstatus
-// called by index.php?app=menu&inc=daemon (periodic daemon) to set sms status
+// called by index.php?app=main&inc=daemon (periodic daemon) to set sms status
 // no returns needed
-// $p_datetime	: first sms delivery datetime
-// $p_update	: last status update datetime
-function uplink_hook_getsmsstatus($gpid=0,$uid="",$smslog_id="",$p_datetime="",$p_update="") {
-	// global $uplink_param;
+// $p_datetime : first sms delivery datetime
+// $p_update : last status update datetime
+function uplink_hook_getsmsstatus($gpid = 0, $uid = "", $smslog_id = "", $p_datetime = "", $p_update = "") {
+	
+	// global $plugin_config;
 	// p_status :
 	// 0 = pending
 	// 1 = delivered
 	// 2 = failed
-	// setsmsdeliverystatus($smslog_id,$uid,$p_status);
-	global $uplink_param;
-	$db_query = "SELECT * FROM "._DB_PREF_."_gatewayUplink WHERE up_local_slid='$smslog_id'";
-	$db_result = dba_query($db_query);
-	while ($db_row = dba_fetch_array($db_result)) {
-		$local_slid = $db_row['up_local_slid'];
-		$remote_slid = $db_row['up_remote_slid'];
-		// fixme anton - from playSMS v0.9.6 references to input.php replaced with index.php?app=webservices
-		// I should add autodetect, if its below v0.9.6 should use input.php
-		$query_string = "index.php?app=webservices&u=".$uplink_param['username']."&p=".$uplink_param['password']."&ta=ds&slid=".$remote_slid;
-		$url = $uplink_param['master']."/".$query_string;
-		$response = @implode ('', file ($url));
-		switch ($response) {
-			case "1":
-				$p_status = 1;
-				setsmsdeliverystatus($local_slid,$uid,$p_status);
-				$db_query1 = "UPDATE "._DB_PREF_."_gatewayUplink SET c_timestamp='".mktime()."',up_status='1' WHERE up_remote_slid='$remote_slid'";
-				$db_result1 = dba_query($db_query1);
-				break;
-			case "3":
-				$p_status = 3;
-				setsmsdeliverystatus($local_slid,$uid,$p_status);
-				$db_query1 = "UPDATE "._DB_PREF_."_gatewayUplink SET c_timestamp='".mktime()."',up_status='3' WHERE up_remote_slid='$remote_slid'";
-				$db_result1 = dba_query($db_query1);
-				break;
-			case "2":
-			case "ERR 400":
-				$p_status = 2;
-				setsmsdeliverystatus($local_slid,$uid,$p_status);
-				$db_query1 = "UPDATE "._DB_PREF_."_gatewayUplink SET c_timestamp='".mktime()."',up_status='2' WHERE up_remote_slid='$remote_slid'";
-				$db_result1 = dba_query($db_query1);
-				break;
+	// dlr($smslog_id,$uid,$p_status);
+	global $plugin_config;
+	
+	$smscs = gateway_getall_smsc_names($plugin_config['uplink']['name']);
+	foreach ($smscs as $smsc) {
+		$plugin_config = gateway_apply_smsc_config($smsc, $plugin_config);
+		
+		$db_query = "SELECT * FROM " . _DB_PREF_ . "_gatewayUplink WHERE up_local_smslog_id='$smslog_id'";
+		$db_result = dba_query($db_query);
+		if ($db_row = dba_fetch_array($db_result)) {
+			$local_smslog_id = $db_row['up_local_smslog_id'];
+			$remote_smslog_id = $db_row['up_remote_smslog_id'];
+			$remote_queue_code = $db_row['up_remote_queue_code'];
+			$dst = $db_row['up_dst'];
+			
+			if ($local_smslog_id && ($remote_smslog_id || ($remote_queue_code && $dst))) {
+				
+				$ws = new Playsms\Webservices();
+				
+				$ws->url = $plugin_config['uplink']['master'] . '/index.php?app=ws';
+				$ws->username = $plugin_config['uplink']['username'];
+				$ws->token = $plugin_config['uplink']['token'];
+				$ws->smslog_id = $remote_smslog_id;
+				$ws->queue = $remote_queue_code;
+				$ws->count = 1;
+				
+				$ws->getOutgoing();
+				
+				// _log('getsmsstatus url:[' . $ws->getWebservicesUrl() . '] smsc:[' . $smsc . ']', 3, 'uplink_hook_getsmsstatus');
+				
+
+				$response = $ws->getData()->data[0];
+				if ($response->status == 2) {
+					$p_status = 2;
+					dlr($local_smslog_id, $uid, $p_status);
+				} else {
+					if ($p_status = (int) $response->status) {
+						dlr($local_smslog_id, $uid, $p_status);
+					}
+				}
+			}
 		}
 	}
 }
-
-// hook_getsmsinbox
-// called by incoming sms processor
-// no returns needed
-function uplink_hook_getsmsinbox() {
-	// global $uplink_param;
-	// $sms_datetime	: incoming sms datetime
-	// $message		: incoming sms message
-	// setsmsincomingaction($sms_datetime,$sms_sender,$message,$sms_receiver)
-	// you must retrieve all informations needed by setsmsincomingaction()
-	// from incoming sms, have a look uplink gateway module
-	// fixme anton - uplink will receive incoming sms by using callback/push url
-	/*
-	global $uplink_param;
-	$handle = @opendir($uplink_param['path']);
-	while ($sms_in_file = @readdir($handle)) {
-	if (eregi("^ERR.in",$sms_in_file) && !eregi("^[.]",$sms_in_file)) {
-	$fn = $uplink_param['path']."/$sms_in_file";
-	// logger_print("infile:".$fn, 2, "uplink incoming");
-	$tobe_deleted = $fn;
-	$lines = @file ($fn);
-	$sms_datetime = trim($lines[0]);
-	$sms_sender = trim($lines[1]);
-	$message = "";
-	for ($lc=2;$lc<count($lines);$lc++) {
-	$message .= trim($lines[$lc]);
-	}
-	// collected:
-	// $sms_datetime, $sms_sender, $message
-	setsmsincomingaction($sms_datetime,$sms_sender,$message,$sms_receiver);
-	logger_print("sender:".$sms_sender." dt:".$sms_datetime." msg:".$message, 2, "uplink incoming");
-	@unlink($tobe_deleted);
-	}
-	}
-	*/
-}
-
-?>

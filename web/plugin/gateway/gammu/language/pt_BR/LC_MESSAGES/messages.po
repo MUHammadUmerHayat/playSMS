@@ -1,30 +1,24 @@
 msgid ""
 msgstr ""
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-09-01 08:26+0700\n"
+"POT-Creation-Date: 2012-09-29 17:59+0700\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: plugin/gateway/gammu/config.php:12 plugin/gateway/gammu/gammu.php:24
-msgid "Manage gammu"
-msgstr "Administrar gammu"
+msgid "Changes have been made"
+msgstr "Alterações foram realizadas"
 
-#: plugin/gateway/gammu/gammu.php:9
-msgid "Active"
-msgstr "Ativo"
-
-#: plugin/gateway/gammu/gammu.php:13
-msgid "Inactive"
-msgstr "Inativo"
-
-#: plugin/gateway/gammu/gammu.php:13
-msgid "click here to activate"
-msgstr "clique aqui para ativar"
-
-#: plugin/gateway/gammu/gammu.php:28
 msgid "Gateway name"
 msgstr "Nome do gateway"
 
-#: plugin/gateway/gammu/gammu.php:37
-msgid "Gateway has been activated"
-msgstr "Gateway foi ativado"
+msgid "Manage gammu"
+msgstr "Gerenciar gammu"
+
+msgid "Receiver number"
+msgstr "Número do destinatário"
+
+msgid "Save"
+msgstr "Salvar"
+
+msgid "Spool folder"
+msgstr "Diretório do spool"
